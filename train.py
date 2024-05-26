@@ -1,18 +1,21 @@
-#Cell 1
+print(f"You're running the training script.")
+
+#Necessary imports
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torchvision.datasets import Flowers102
-import torch.nn.functional as F
-import torchvision.models as models
 import copy
-import os
+print(f"Imports done.")
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using: {device}")
 
+
+#Transforms 
 train_transform = transforms.Compose([
     transforms.RandomResizedCrop(224),
     transforms.RandomHorizontalFlip(),
@@ -34,11 +37,15 @@ test_transform = transforms.Compose([
 train_set = Flowers102(root='data', split='train', download=True, transform=train_transform)
 val_set = Flowers102(root='data', split='val', download=True, transform=test_transform)
 test_set = Flowers102(root='data', split='test', download=True, transform=test_transform)
+print(f"Data sets loaded.")
 
+#Load dataloaders
 train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
 val_loader = DataLoader(val_set, batch_size=64, shuffle=False)
 test_loader = DataLoader(test_set, batch_size=64, shuffle=False)
+print(f"Dataloaders loaded.")
 
+#Neural Network
 class FlowerClassifier(nn.Module):
     def __init__(self):
         super(FlowerClassifier, self).__init__()
@@ -73,8 +80,11 @@ class FlowerClassifier(nn.Module):
         x = self.classifier(x)
         return x
 
+#Load model
 model = FlowerClassifier().to(device)
+print(f"Model Initialized.")
 
+#Train function
 def train_model(model, criterion, optimizer, scheduler, train_loader, val_loader, num_epochs):
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
@@ -129,12 +139,18 @@ def train_model(model, criterion, optimizer, scheduler, train_loader, val_loader
     model.load_state_dict(best_model_wts)
     return model
 
-# Define cyclic learning rate scheduler
+#Hyperparams
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0001)
-scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr=0.0001, max_lr=0.001, step_size_up=5, mode='triangular2', cycle_momentum=False)
+optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=0.0001)
 
-model = train_model(model, criterion, optimizer, scheduler, train_loader, val_loader, 50)
+
+scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=0.001, epochs=1000, pct_start=0.3)
+model = train_model(model, criterion, optimizer, scheduler, train_loader, val_loader, 1000)
+print(f"Trained 1000 epochs. First part of training done.")
+#Change scheduler and train model
+scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr=0.0001, max_lr=0.001, step_size_up=5, mode='triangular2', cycle_momentum=False)
+model = train_model(model, criterion, optimizer, scheduler, train_loader, val_loader, 1000)
+print(f"Trained 2000 epochs. Training done.")
 
 
 def evaluate_model(model, dataloader):
@@ -154,6 +170,7 @@ def evaluate_model(model, dataloader):
     accuracy = running_corrects.double() / len(dataloader.dataset) * 100  # Convert to percentage
     print(f'Test Accuracy: {accuracy:.2f}%')
 
-evaluate_model(model, test_loader)
+evaluate_model(model, test_loader) # Evaluate model
+print(f"Training and Evaluation done.")
 
 
