@@ -144,7 +144,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=0.0001)
 
 
-scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=0.001, epochs=1000, pct_start=0.3)
+scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=0.001, total_steps=1000, pct_start=0.3)
 model = train_model(model, criterion, optimizer, scheduler, train_loader, val_loader, 1000)
 print(f"Trained 1000 epochs. First part of training done.")
 #Change scheduler and train model
