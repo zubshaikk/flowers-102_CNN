@@ -67,4 +67,5 @@ output = model(example_input)
 figure = make_dot(output, params=dict(model.named_parameters()))
 
 figure.format = "png"
+figure.attr(dpi="300") #Clearer Image
 figure.render("NN_GRAPH")
